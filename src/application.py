@@ -1,7 +1,8 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify
 from datetime import datetime
 import json
-from columbia_student_resource import ColumbiaStudentResource
+# from columbia_student_resource import ColumbiaStudentResource
+from src.columbia_student_resource import ColumbiaStudentResource
 from flask_cors import CORS
 
 # Create the Flask application object.
@@ -11,6 +12,10 @@ app = Flask(__name__,
             template_folder='web/templates')
 
 CORS(app)
+
+@app.get("/")
+def index():
+    return "Index Page"
 
 
 @app.get("/api/health")
@@ -23,7 +28,9 @@ def get_health():
     }
 
     # DFF TODO Explain status codes, content type, ... ...
-    result = Response(json.dumps(msg), status=200, content_type="application/json")
+    # result = Response(json.dumps(msg), status=200, content_type="application/json")
+    # result = Response(jsonify(**msg), status=200, content_type="application/json")
+    result = jsonify(msg)
 
     return result
 
@@ -34,11 +41,13 @@ def get_student_by_uni(uni):
     result = ColumbiaStudentResource.get_by_key(uni)
 
     if result:
-        rsp = Response(json.dumps(result), status=200, content_type="application.json")
+        # rsp = Response(json.dumps(result), status=200, content_type="application.json")
+        rsp = jsonify(result)
     else:
         rsp = Response("NOT FOUND", status=404, content_type="text/plain")
 
     return rsp
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5011)

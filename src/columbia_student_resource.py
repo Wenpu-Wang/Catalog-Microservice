@@ -5,7 +5,7 @@ import os
 
 class ColumbiaStudentResource:
 
-    def __int__(self):
+    def __init__(self):
         pass
 
     @staticmethod

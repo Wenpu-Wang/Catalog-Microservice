@@ -2,16 +2,14 @@
 
 ## Introduction
 
-Catalog-Microservice.
+Catalog-Microservice for E6156 Course at Columbia University
 
 
 ## Setup
 
-- For the purposes of E6156 and W4111, please install PyCharm Professional.
-- University students can register for a free, one year license.
-- Also, please make sure that your system has already installed:
-  - Python (3.9 or greater)
-  - MySQL Community Server
+Please make sure that your system has already installed:
+- Python (3.9 or greater)
+- MySQL Community Server
 
 Open the project in PyCharm and create a new virtual environment for the project. You can find the instructions
 online in the PyCharm documentation. After creating the virtual environment, open a terminal window using the bottom
@@ -27,11 +25,12 @@ Select the file ```application.py``` in the directory ```./src``` in the file ex
 select "run." In the execution panel at the bottom of the screen, you should see messages about "running on ... ..."
 This indicates that the web application has started.
 
-Select the file ```tts.py``` and run it. The message will determine if your end-to-end test worked.
-
 
 ## Connecting to the Database
 
-The file ```columbia_student_resource.py``` is a simple, starter REST resource.
+The file ```catalog_item_info_resource.py``` is a REST resource.
 
-Wenpu Wang, ww2569
+## Contact
+
+Wenpu Wang, ww2569@columbia.edu
+
