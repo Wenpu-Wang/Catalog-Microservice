@@ -7,7 +7,7 @@ PATCH item info: update/<item_id>
 """
 from flask import jsonify, Response
 
-from src.database_services.rdb_services import RDBService
+from database_services.rdb_services import RDBService
 
 
 class CatalogItemInfoResource:

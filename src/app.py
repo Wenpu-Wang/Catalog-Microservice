@@ -1,6 +1,6 @@
 from flask import Flask, Response, request, jsonify, url_for, json
 
-from src.application_services.catalog_item_info_resource import CatalogItemInfoResource
+from application_services.catalog_item_info_resource import CatalogItemInfoResource
 
 app = Flask(__name__)
 
