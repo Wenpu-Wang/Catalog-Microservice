@@ -125,6 +125,51 @@ class RDBService:
 
         return clause, args
 
+    @classmethod
+    def find_by_template(cls, db_schema, table_name, column_name, template):
+        wc, args = cls._get_where_clause_args(template)
+
+        conn = cls._get_db_connection()
+        cur = conn.cursor()
+
+        sql = "select " + ", ".join(column_name) + "from " + db_schema + "." + table_name + " " + wc
+        res = cur.execute(sql, args=args)
+        res = cur.fetchall()
+
+        conn.close()
+
+        return res
+
+    @classmethod
+    def find_by_template_join(cls, db_schema, table_name1, table_name2, column_names1, column_names2, template,
+                              join_column1, join_column2):
+        wc, args = cls._get_where_clause_args(template)
+
+        conn = cls._get_db_connection()
+        cur = conn.cursor()
+
+        for i in range(len(column_names1)):
+            column_names1[i] = table_name1 + "." + column_names1[i]
+
+        for i in range(len(column_names2)):
+            column_names2[i] = table_name2 + "." + column_names2[i]
+
+        print(column_names1)
+        print(column_names2)
+        column_names1.extend(column_names2)
+
+        sql = "select " + ", ".join(column_names1) + " from " + \
+              db_schema + "." + table_name1 + " join " + db_schema + "." + table_name2 + " on " + \
+              table_name1 + "." + join_column1 + " = " + table_name2 + "." + join_column2 + " " + wc
+        print("SQL Statement = " + cur.mogrify(sql, None))
+
+        res = cur.execute(sql, args=args)
+        res = cur.fetchall()
+
+        conn.close()
+
+        return res
+    
     """
     # def put_by_template(db_schema, table_name, template, id, name, field_list):
     #     print(id, name)
