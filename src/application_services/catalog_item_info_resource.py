@@ -12,6 +12,20 @@ from database_services.rdb_services import RDBService
 
 class CatalogItemInfoResource:
     @classmethod
+    def get_items(cls):
+        result = RDBService.find_by_template_join(
+            db_schema="catalog_db",
+            table_name1="item_info",
+            table_name2="item_stocking",
+            column_names1=["id", "name", "description", "item_price", "image_url"],
+            column_names2=["stock"],
+            template=None,
+            join_column1="id",
+            join_column2="item_id"
+        )
+        return result
+
+    @classmethod
     def get_item_by_id(cls, item_id):
         """
         :param item_id: id of item

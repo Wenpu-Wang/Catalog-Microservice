@@ -7,11 +7,6 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def index():
-    return "Index Page"
-
-
-@app.route("/catalog", methods=["GET"])
-def catalog_page():
     context = {
         "get_item_by_id": "/catalog/<int:item_id>",
         "get_item_by_name": "/catalog/<string:name>",
@@ -21,6 +16,16 @@ def catalog_page():
         "update_item": "/catalog/update"
     }
     return jsonify(context)
+
+
+@app.route("/catalog", methods=["GET"])
+def get_items():
+    result = CatalogItemInfoResource.get_items()
+    if result:
+        rsp = jsonify(result)
+    else:
+        rsp = Response("NOT FOUND", status=404, content_type="text/plain")
+    return rsp
 
 
 @app.route("/catalog/<int:item_id>", methods=["GET"])
@@ -91,4 +96,5 @@ def update_item_by_id():
 
 
 if __name__ == "__main__":
+    app.debug = True
     app.run(host="0.0.0.0", port=5011)

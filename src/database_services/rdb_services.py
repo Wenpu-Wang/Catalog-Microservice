@@ -108,7 +108,6 @@ class RDBService:
         res = cur.fetchall()
         conn.commit()
 
-    """
     @staticmethod
     def _get_where_clause_args(template):
         terms = []
@@ -126,21 +125,7 @@ class RDBService:
 
         return clause, args
 
-    @classmethod
-    def find_by_template(cls, db_schema, table_name, template, field_list):
-        wc, args = cls._get_where_clause_args(template)
-
-        conn = cls._get_db_connection()
-        cur = conn.cursor()
-
-        sql = "select * from " + db_schema + "." + table_name + " " + wc
-        res = cur.execute(sql, args=args)
-        res = cur.fetchall()
-
-        conn.close()
-
-        return res
-
+    """
     # def put_by_template(db_schema, table_name, template, id, name, field_list):
     #     print(id, name)
     #     wc, args = _get_where_clause_args(template)
