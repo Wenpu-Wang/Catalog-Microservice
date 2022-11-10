@@ -78,10 +78,10 @@ def add_item_new():
     return rsp
 
 
-@app.route("/catalog/update", methods=["PATCH"])
+@app.route("/catalog/update", methods=["PUT"])
 def update_item_by_id():
     data = json.loads(request.data)
-    print(data)
+    # print(data)
     CatalogItemInfoResource.update_item_by_id(
         item_id=data["item_id"],
         update_column=data["update_column"],
