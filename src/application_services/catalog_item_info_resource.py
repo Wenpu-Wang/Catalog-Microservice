@@ -5,7 +5,6 @@
 # POST item info: newitem/
 PATCH item info: update/<item_id>
 """
-from flask import jsonify, Response
 
 from database_services.rdb_services import RDBService
 

@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify, url_for, json
+from flask import Flask, Response, request, jsonify, json
 
 from application_services.catalog_item_info_resource import CatalogItemInfoResource
 
@@ -8,6 +8,7 @@ app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def index():
     context = {
+        "get_items": "/catalog",
         "get_item_by_id": "/catalog/<int:item_id>",
         "get_item_by_name": "/catalog/<string:name>",
         "get_item_stock_by_id": "/catalog/stock/<int:item_id>",
@@ -32,6 +33,7 @@ def get_items():
 def get_item_by_id(item_id):
     result = CatalogItemInfoResource.get_item_by_id(item_id)
     if result:
+        result["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item_id)["stock"]
         rsp = jsonify(result)
     else:
         rsp = Response("NOT FOUND", status=404, content_type="text/plain")
@@ -42,6 +44,8 @@ def get_item_by_id(item_id):
 def get_item_by_name(name):
     result = CatalogItemInfoResource.get_item_by_name(name)
     if result:
+        for item in result:
+            item["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item["id"])["stock"]
         rsp = jsonify(result)
     else:
         rsp = Response("NOT FOUND", status=404, content_type="text/plain")
