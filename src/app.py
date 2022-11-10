@@ -8,25 +8,39 @@ app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def index():
     context = {
-        "get_items": "/catalog",
+        "get_post_items": "/catalog",
         "get_item_by_id": "/catalog/<int:item_id>",
         "get_item_by_name": "/catalog/<string:name>",
         "get_item_stock_by_id": "/catalog/stock/<int:item_id>",
         "delete_item_by_id": "/catalog/delete/<int:item_id>",
-        "add_item_new": "/catalog/add",
         "update_item": "/catalog/update"
     }
     return jsonify(context)
 
 
-@app.route("/catalog", methods=["GET"])
-def get_items():
-    result = CatalogItemInfoResource.get_items()
-    if result:
-        rsp = jsonify(result)
-    else:
-        rsp = Response("NOT FOUND", status=404, content_type="text/plain")
-    return rsp
+@app.route("/catalog", methods=["GET", "POST"])
+def get_post_items():
+    if request.method == "GET":
+        result = CatalogItemInfoResource.get_items()
+        if result:
+            rsp = jsonify(result)
+        else:
+            rsp = Response("NOT FOUND", status=404, content_type="text/plain")
+        return rsp
+    if request.method == "POST":
+        # data = request.form
+        # print("data", data)
+        data = json.loads(request.data)
+        # print(data)
+        CatalogItemInfoResource.add_item_new(
+            name=data["name"],
+            description=data["description"],
+            item_price=data["item_price"],
+            image_url=data["image_url"],
+            stock=data["stock"]
+        )
+        rsp = Response("", status=201, content_type="application/json")
+        return rsp
 
 
 @app.route("/catalog/<int:item_id>", methods=["GET"])
@@ -67,23 +81,6 @@ def delete_item_by_id(item_id):
     CatalogItemInfoResource.delete_item_by_id(item_id)
     # Don't know how the packet forms yet
     rsp = Response("", status=200, content_type="application/json")
-    return rsp
-
-
-@app.route("/catalog/add", methods=["POST"])
-def add_item_new():
-    # data = request.form
-    # print("data", data)
-    data = json.loads(request.data)
-    # print(data)
-    CatalogItemInfoResource.add_item_new(
-        name=data["name"],
-        description=data["description"],
-        item_price=data["item_price"],
-        image_url=data["image_url"],
-        stock=data["stock"]
-    )
-    rsp = Response("", status=201, content_type="application/json")
     return rsp
 
 
