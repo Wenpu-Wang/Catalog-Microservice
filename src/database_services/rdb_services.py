@@ -29,10 +29,12 @@ class RDBService:
 
         # sql = f"select * from {db_schema}.{table_name} where {column_name} like '{value_prefix}%'"
         sql = "select * from " + db_schema + "." + table_name + " where " + \
-              column_name + " like " + "'" + value_prefix + "%'"
-        print("SQL Statement = " + cur.mogrify(sql, None))
+              column_name + " like " + "%s"
+        value_prefix = value_prefix + "%"
+        print(value_prefix)
+        print("SQL Statement = " + cur.mogrify(sql, value_prefix))
 
-        res = cur.execute(sql)
+        cur.execute(sql, args=value_prefix)
         res = cur.fetchall()
 
         conn.close()
@@ -45,10 +47,10 @@ class RDBService:
         cur = conn.cursor()
 
         sql = "select * from " + db_schema + "." + table_name + " where " + \
-              column_name + " = " + str(value)
-        print("SQL Statement = " + cur.mogrify(sql, None))
+              column_name + " = %s"
+        print("SQL Statement = " + cur.mogrify(sql, value))
 
-        res = cur.execute(sql)
+        cur.execute(sql, args=value)
         res = cur.fetchone()
 
         conn.close()
@@ -56,57 +58,85 @@ class RDBService:
         return res
 
     @classmethod
-    def delete_by_value(cls, db_schema, table_name, column_name, value):
+    def delete_by_value(cls, db_schema, table_name1, table_name2,
+                        column_name1, column_name2, value):
+        """
+        :return: successful or not
+        """
         conn = cls._get_db_connection()
-        cur = conn.cursor()
+        sql1 = "delete from " + db_schema + "." + table_name1 + " where " + \
+               column_name1 + " = " + "%s"
+        sql2 = "delete from " + db_schema + "." + table_name2 + " where " + \
+               column_name2 + " = " + "%s"
 
-        sql = "delete from " + db_schema + "." + table_name + " where " + \
-              column_name + " = " + str(value)
-        print("SQL Statement = " + cur.mogrify(sql, None))
-
-        res = cur.execute(sql)
-        print(res)
-        res = cur.fetchall()
-        conn.commit()
+        try:
+            cur = conn.cursor()
+            print("SQL Statement = " + cur.mogrify(sql1, value))
+            print("SQL Statement = " + cur.mogrify(sql2, value))
+            cur.execute(sql1, args=value)
+            cur.execute(sql2, args=value)
+        except UserWarning:
+            conn.rollback()
+            conn.close()
+            return False
+        else:
+            conn.commit()
+            conn.close()
+            return True
 
     @classmethod
-    def add_by_prefix(cls, db_schema, table_name, column_names, values):
+    def add_by_prefix(cls, db_schema, table_name1, table_name2, column_names1, column_names2,
+                      values1, values2):
+        conn = cls._get_db_connection()
+
+        sql1 = " INSERT INTO " + db_schema + "." + table_name1 + " (" + ",".join(column_names1) + ")"
+        sql1 += (" values (" + ",".join(len(column_names1) * ["%s"]) + ")")
+
+        sql2 = " INSERT INTO " + db_schema + "." + table_name2 + " (" + ",".join(column_names2) + ")"
+        sql2 += (" values (" + ",".join(len(column_names2) * ["%s"]) + ")")
+
+        try:
+            cur = conn.cursor()
+            print("SQL Statement = " + cur.mogrify(sql1, values1))
+            print("SQL Statement = " + cur.mogrify(sql2, values2))
+            cur.execute(sql1, args=values1)
+            cur.execute(sql2, args=values2)
+        except UserWarning:
+            conn.rollback()
+            conn.close()
+            return False
+        else:
+            conn.commit()
+            conn.close()
+            return True
+
+    @classmethod
+    def update_by_value(cls, db_schema, table_name, column_name, value, update_columns: list):
+        """
+        :param column_name:
+        :param db_schema:
+        :param table_name:
+        :param value: the matched attribute's value
+        :param update_columns: the [(k,v)...] list
+        :return:
+        """
         conn = cls._get_db_connection()
         cur = conn.cursor()
 
-        sql = " INSERT INTO " + db_schema + "." + table_name + " ("
-        for i in range(len(column_names) - 1):
-            sql += (column_names[i] + ", ")
-        sql += (column_names[-1] + ")")
+        li = []
+        for k, v in update_columns:
+            li.append(f"{k}='{v}'")
 
-        sql += " values ("
-        for i in range(len(values) - 1):
-            sql += ("'" + str(values[i]) + "'" + ", ")
-        sql += ("'" + str(values[-1]) + "'" + ");")
+        sql = " UPDATE " + db_schema + "." + table_name + " SET " + ", ".join(li) + " WHERE " + column_name + "=%s"
+        print("SQL Statement = " + cur.mogrify(sql, value))
 
-        print("SQL Statement = " + cur.mogrify(sql, None))
-
-        res = cur.execute(sql)
-        res = cur.fetchall()
+        cur.execute(sql, args=value)
         conn.commit()
-        print(res)
+        row_affected = cur.rowcount
+        print("row_affected:", row_affected)
         conn.close()
 
-        return res
-
-    @classmethod
-    def update_by_template(cls, db_schema, table_name, column_name, value_prefix, update_column, value_update):
-        conn = cls._get_db_connection()
-        cur = conn.cursor()
-        print("update_by_template")
-
-        sql = "update " + db_schema + "." + table_name + \
-              " set " + str(update_column) + " = '" + str(value_update) + "' where " + column_name + ' = ' \
-              + str(value_prefix)
-        print("SQL Statement = " + cur.mogrify(sql, None))
-        res = cur.execute(sql)
-        res = cur.fetchall()
-        conn.commit()
+        return row_affected
 
     @staticmethod
     def _get_where_clause_args(template):
@@ -133,7 +163,7 @@ class RDBService:
         cur = conn.cursor()
 
         sql = "select " + ", ".join(column_name) + "from " + db_schema + "." + table_name + " " + wc
-        res = cur.execute(sql, args=args)
+        cur.execute(sql, args=args)
         res = cur.fetchall()
 
         conn.close()
@@ -163,48 +193,9 @@ class RDBService:
               table_name1 + "." + join_column1 + " = " + table_name2 + "." + join_column2 + " " + wc
         print("SQL Statement = " + cur.mogrify(sql, None))
 
-        res = cur.execute(sql, args=args)
+        cur.execute(sql, args=args)
         res = cur.fetchall()
 
         conn.close()
 
         return res
-    
-    """
-    # def put_by_template(db_schema, table_name, template, id, name, field_list):
-    #     print(id, name)
-    #     wc, args = _get_where_clause_args(template)
-    #
-    #     conn = _get_db_connection()
-    #     cur = conn.cursor()
-    #
-    #     table = db_schema + "." + table_name
-    #     # sql = "update " + table + " set Name=" + name + " " + "where idPlayer=" + id + " " + wc
-    #     sql = f"UPDATE {table} SET Name='{name}' WHERE idPlayer={id}" + " " + wc
-    #     print(sql)
-    #     res = cur.execute(sql, args=args)
-    #     res = cur.fetchall()
-    #
-    #     conn.commit()
-    #     conn.close()
-    #
-    #     return res
-
-    @classmethod
-    def select_attribute2_by_attribute1(cls, db_schema, table1, table2, attribute1, attribute2, reference1, reference2,
-                                        value):
-        conn = cls._get_db_connection()
-        cur = conn.cursor()
-
-        sql = "select " + attribute2 + " from " + db_schema + "." + table2 + " where " + reference2 + " = (" \
-              + " select " + reference1 + " from " + db_schema + "." + table1 + " where " + attribute1 + " = " + value \
-              + ")"
-        print("SQL Statement = " + cur.mogrify(sql, None))
-
-        res = cur.execute(sql)
-        print(res)
-        res = cur.fetchall()
-
-        conn.close()
-        return res
-        """

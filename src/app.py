@@ -8,91 +8,110 @@ app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def index():
     context = {
-        "get_post_items": "/catalog",
-        "get_item_by_id": "/catalog/<int:item_id>",
-        "get_item_by_name": "/catalog/<string:name>",
-        "get_item_stock_by_id": "/catalog/stock/<int:item_id>",
-        "delete_item_by_id": "/catalog/delete/<int:item_id>",
-        "update_item": "/catalog/update"
+        "GET items": "/items",
+        "GET items by name": "/items/<string:name>",
+        "POST an item": "/item",
+        "GET an item by id": "/item/<int:item_id>",
+        "GET an item's stock by id": "/item/stock/<int:item_id>",
+        "PUT an item by id": "/item/<int:item_id>",
+        "DELETE an item by id": "/item/<int:item_id>"
     }
     return jsonify(context)
 
 
-@app.route("/catalog", methods=["GET", "POST"])
-def get_post_items():
-    if request.method == "GET":
-        result = CatalogItemInfoResource.get_items()
-        if result:
-            rsp = jsonify(result)
-        else:
-            rsp = Response("NOT FOUND", status=404, content_type="text/plain")
-        return rsp
-    if request.method == "POST":
-        # data = request.form
-        # print("data", data)
-        data = json.loads(request.data)
-        # print(data)
-        CatalogItemInfoResource.add_item_new(
-            name=data["name"],
-            description=data["description"],
-            item_price=data["item_price"],
-            image_url=data["image_url"],
-            stock=data["stock"]
-        )
-        rsp = Response("", status=201, content_type="application/json")
-        return rsp
-
-
-@app.route("/catalog/<int:item_id>", methods=["GET"])
-def get_item_by_id(item_id):
-    result = CatalogItemInfoResource.get_item_by_id(item_id)
+# TODO: implement pagination
+@app.route("/items", methods=["GET"])
+def get_items():
+    result = CatalogItemInfoResource.get_items()
     if result:
-        result["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item_id)["stock"]
         rsp = jsonify(result)
     else:
-        rsp = Response("NOT FOUND", status=404, content_type="text/plain")
+        rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
     return rsp
 
 
-@app.route("/catalog/<string:name>", methods=["GET"])
-def get_item_by_name(name):
-    result = CatalogItemInfoResource.get_item_by_name(name)
+@app.route("/items/<string:name>", methods=["GET"])
+def get_items_by_name(name):
+    # search for matched prefix names
+    result = CatalogItemInfoResource.get_items_by_name(name)
     if result:
         for item in result:
             item["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item["id"])["stock"]
         rsp = jsonify(result)
     else:
-        rsp = Response("NOT FOUND", status=404, content_type="text/plain")
+        rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
     return rsp
 
 
-@app.route("/catalog/stock/<int:item_id>", methods=["GET"])
+@app.route("/item", methods=["POST"])
+def post_item():
+    data = json.loads(request.data)
+    exist = CatalogItemInfoResource.get_item_by_name(data["name"])
+    if exist:
+        return Response(json.dumps({"message": "item already exist"}), status=400, content_type="application/json")
+    success = CatalogItemInfoResource.add_item_new(
+        name=data["name"],
+        description=data["description"],
+        item_price=data["item_price"],
+        image_url=data["image_url"],
+        stock=data["stock"]
+    )
+    if success:
+        rsp = Response(json.dumps({"message": "new item added"}), status=200, content_type="application/json")
+    else:
+        rsp = Response(json.dumps({"message": "item creation failed"}), status=500, content_type="application/json")
+    return rsp
+
+
+@app.route("/item/<int:item_id>", methods=["GET"])
+def get_item_by_id(item_id):
+    result = CatalogItemInfoResource.get_item_by_id(item_id)
+    print(result)
+    if result:
+        result["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item_id)["stock"]
+        rsp = jsonify(result)
+    else:
+        rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
+    return rsp
+
+
+@app.route("/item/stock/<int:item_id>", methods=["GET"])
 def get_item_stock_by_id(item_id):
     result = CatalogItemInfoResource.get_item_stock_by_id(item_id)
     if result:
         rsp = jsonify(result["stock"])
     else:
-        rsp = Response("NOT FOUND", status=404, content_type="text/plain")
+        rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
     return rsp
 
 
-@app.route("/catalog/delete/<int:item_id>", methods=["DELETE"])
+@app.route("/item/<int:item_id>", methods=["PUT"])
+def update_item_by_id(item_id):
+    new_data = json.loads(request.data)
+    exist = CatalogItemInfoResource.get_item_by_id(item_id)
+    if not exist:
+        return Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
+    else:
+        success = CatalogItemInfoResource.update_item_by_id(item_id, new_data)
+        print("success:", success)
+        if success:
+            rsp = Response(json.dumps({"message": "update successful"}), status=200, content_type="application/json")
+        else:
+            # if there's no change in the update
+            rsp = Response(json.dumps({"message": "same update"}), status=400, content_type="application/json")
+    return rsp
+
+
+@app.route("/item/<int:item_id>", methods=["DELETE"])
 def delete_item_by_id(item_id):
-    CatalogItemInfoResource.delete_item_by_id(item_id)
-    # Don't know how the packet forms yet
-    rsp = Response("", status=200, content_type="application/json")
-    return rsp
-
-
-@app.route("/catalog/update", methods=["PUT"])
-def update_item_by_id():
-    data = json.loads(request.data)
-    # print(data)
-    CatalogItemInfoResource.update_item_by_id(
-        item_id=data["item_id"],
-        update_column=data["update_column"],
-        value_update=data["value_update"])
-    rsp = Response("", status=200, content_type="application/json")
+    exist = CatalogItemInfoResource.get_item_by_id(item_id)
+    if not exist:
+        return Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
+    success = CatalogItemInfoResource.delete_item_by_id(item_id)
+    if success:
+        rsp = Response(json.dumps({"message": "deletion successful"}), status=200, content_type="application/json")
+    else:
+        rsp = Response(json.dumps({"message": "deletion failed"}), status=500, content_type="application/json")
     return rsp
 
 
