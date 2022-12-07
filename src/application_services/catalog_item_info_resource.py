@@ -1,11 +1,3 @@
-"""
-# GET item info: catalog/<item_id>
-# GET item stock: catalog/stock/<item_id>
-# DELETE item info: catalog/delete/<item_id>
-# POST item info: newitem/
-PATCH item info: update/<item_id>
-"""
-
 from database_services.rdb_services import RDBService
 
 
@@ -36,6 +28,15 @@ class CatalogItemInfoResource:
     @classmethod
     def get_item_by_name(cls, name):
         """
+        :param name: name of item
+        :return: a dic of an item
+        """
+        result = RDBService.get_by_value("catalog_db", "item_info", "name", name)
+        return result
+
+    @classmethod
+    def get_items_by_name(cls, name):
+        """
         :param name: prefix of item name
         :return: a list of fetched items
         """
@@ -53,44 +54,59 @@ class CatalogItemInfoResource:
 
     @classmethod
     def delete_item_by_id(cls, item_id):
-        RDBService.delete_by_value("catalog_db", "item_stocking", "item_id", item_id)
-        RDBService.delete_by_value("catalog_db", "item_info", "id", item_id)
+        """
+        :param item_id: id of item
+        :return: Delete item successful or not
+        """
+        success = RDBService.delete_by_value(db_schema="catalog_db",
+                                             table_name1="item_stocking",
+                                             table_name2="item_info",
+                                             column_name1="item_id",
+                                             column_name2="id",
+                                             value=item_id
+                                             )
+        return success
 
     @classmethod
     def add_item_new(cls, name, description, item_price, image_url, stock):
-        RDBService.add_by_prefix(
+        """
+        :return: Add item successful or not
+        """
+        success = RDBService.add_by_prefix(
             db_schema="catalog_db",
-            table_name="item_info",
-            column_names=("name", "description", "item_price", "image_url"),
-            values=(name, description, item_price, image_url)
+            table_name1="item_info",
+            table_name2="item_stocking",
+            column_names1=["name", "description", "item_price", "image_url"],
+            column_names2=["stock"],
+            values1=[name, description, item_price, image_url],
+            values2=[stock]
         )
-        RDBService.add_by_prefix(
-            db_schema="catalog_db",
-            table_name="item_stocking",
-            column_names=["stock"],
-            values=[stock]
-        )
+        return success
 
     @classmethod
-    def update_item_by_id(cls, item_id, update_column, value_update):
-        """
-        update an attribute of a item by id
-        :param item_id:
-        :param update_column:
-        :param value_update:
-        :return:
-        """
-        if update_column != "stock":
-            RDBService.update_by_template("catalog_db",
-                                          "item_info",
-                                          "id",
-                                          item_id,
-                                          update_column,
-                                          value_update)
+    def update_item_by_id(cls, item_id, new_data: dict):
+        set_info_list = []
+        set_stock_list = []
+        for k, v in new_data.items():
+            if k != "stock":
+                set_info_list.append((k, v))
+            else:
+                set_stock_list.append((k, v))
+
+        row_affected1, row_affected2 = 0, 0
+        if set_info_list:
+            row_affected1 = RDBService.update_by_value(db_schema="catalog_db",
+                                                       table_name="item_info",
+                                                       column_name="id",
+                                                       value=item_id,
+                                                       update_columns=set_info_list)
+        if set_stock_list:
+            row_affected2 = RDBService.update_by_value(db_schema="catalog_db",
+                                                       table_name="item_stocking",
+                                                       column_name="item_id",
+                                                       value=item_id,
+                                                       update_columns=set_stock_list)
+        if row_affected1 + row_affected2 == 0:
+            return False
         else:
-            RDBService.update_by_template("catalog_db",
-                                          "item_stocking",
-                                          "item_id",
-                                          item_id,
-                                          update_column,
-                                          value_update)
+            return True
