@@ -1,10 +1,13 @@
 from database_services.rdb_services import RDBService
 
+LIMIT = 25
+OFFSET = 0
+
 
 class CatalogItemInfoResource:
     @classmethod
-    def get_items(cls):
-        result = RDBService.find_by_template_join(
+    def get_items(cls, limit=LIMIT, offset=OFFSET):
+        result, num_of_rows = RDBService.find_by_template_join(
             db_schema="catalog_db",
             table_name1="item_info",
             table_name2="item_stocking",
@@ -12,9 +15,11 @@ class CatalogItemInfoResource:
             column_names2=["stock"],
             template=None,
             join_column1="id",
-            join_column2="item_id"
+            join_column2="item_id",
+            limit=limit,
+            offset=offset,
         )
-        return result
+        return result, num_of_rows
 
     @classmethod
     def get_item_by_id(cls, item_id):
@@ -70,9 +75,9 @@ class CatalogItemInfoResource:
     @classmethod
     def add_item_new(cls, name, description, item_price, image_url, stock):
         """
-        :return: Add item successful or not
+        :return: Add id of new item, or False (not successful)
         """
-        success = RDBService.add_by_prefix(
+        new_item_id = RDBService.add_by_prefix(
             db_schema="catalog_db",
             table_name1="item_info",
             table_name2="item_stocking",
@@ -81,7 +86,7 @@ class CatalogItemInfoResource:
             values1=[name, description, item_price, image_url],
             values2=[stock]
         )
-        return success
+        return new_item_id
 
     @classmethod
     def update_item_by_id(cls, item_id, new_data: dict):

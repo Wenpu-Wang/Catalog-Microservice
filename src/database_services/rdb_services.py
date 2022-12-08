@@ -101,6 +101,8 @@ class RDBService:
             print("SQL Statement = " + cur.mogrify(sql2, values2))
             cur.execute(sql1, args=values1)
             cur.execute(sql2, args=values2)
+            cur.execute("select last_insert_id()", args=None)
+            new_item_id = cur.fetchone()["last_insert_id()"]
         except UserWarning:
             conn.rollback()
             conn.close()
@@ -108,7 +110,7 @@ class RDBService:
         else:
             conn.commit()
             conn.close()
-            return True
+            return new_item_id
 
     @classmethod
     def update_by_value(cls, db_schema, table_name, column_name, value, update_columns: list):
@@ -172,7 +174,7 @@ class RDBService:
 
     @classmethod
     def find_by_template_join(cls, db_schema, table_name1, table_name2, column_names1, column_names2, template,
-                              join_column1, join_column2):
+                              join_column1, join_column2, limit: int, offset: int):
         wc, args = cls._get_where_clause_args(template)
 
         conn = cls._get_db_connection()
@@ -184,18 +186,20 @@ class RDBService:
         for i in range(len(column_names2)):
             column_names2[i] = table_name2 + "." + column_names2[i]
 
-        print(column_names1)
-        print(column_names2)
         column_names1.extend(column_names2)
 
         sql = "select " + ", ".join(column_names1) + " from " + \
               db_schema + "." + table_name1 + " join " + db_schema + "." + table_name2 + " on " + \
-              table_name1 + "." + join_column1 + " = " + table_name2 + "." + join_column2 + " " + wc
-        print("SQL Statement = " + cur.mogrify(sql, None))
-
-        cur.execute(sql, args=args)
+              table_name1 + "." + join_column1 + " = " + table_name2 + "." + join_column2 + " " + wc + \
+              " limit " + " %s " + " offset " + " %s "
+        print("SQL Statement = " + cur.mogrify(sql, args=[limit, offset]))
+        cur.execute(sql, args=[limit, offset])
         res = cur.fetchall()
+
+        sql = "select count(*) from " + db_schema + "." + table_name1
+        cur.execute(sql, args=None)
+        num_of_rows = cur.fetchone()["count(*)"]
 
         conn.close()
 
-        return res
+        return res, num_of_rows

@@ -1,6 +1,11 @@
 from flask import Flask, Response, request, jsonify, json
 
 from application_services.catalog_item_info_resource import CatalogItemInfoResource
+from utils import wrap_func
+
+# default settings
+LIMIT = 25
+OFFSET = 0
 
 app = Flask(__name__)
 
@@ -22,11 +27,15 @@ def index():
 # TODO: implement pagination
 @app.route("/items", methods=["GET"])
 def get_items():
-    result = CatalogItemInfoResource.get_items()
-    if result:
-        rsp = jsonify(result)
-    else:
-        rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
+    limit = request.args.get('limit', type=int)
+    offset = request.args.get('offset', type=int)
+    if not limit:
+        limit = LIMIT
+    if not offset:
+        offset = OFFSET
+    print("limit:", limit, "offset:", offset)
+    result, num_of_rows = CatalogItemInfoResource.get_items(limit, offset)
+    rsp = jsonify(wrap_func(result, limit, offset, num_of_rows))
     return rsp
 
 
@@ -49,15 +58,18 @@ def post_item():
     exist = CatalogItemInfoResource.get_item_by_name(data["name"])
     if exist:
         return Response(json.dumps({"message": "item already exist"}), status=400, content_type="application/json")
-    success = CatalogItemInfoResource.add_item_new(
+    new_item_id = CatalogItemInfoResource.add_item_new(
         name=data["name"],
         description=data["description"],
         item_price=data["item_price"],
         image_url=data["image_url"],
         stock=data["stock"]
     )
-    if success:
-        rsp = Response(json.dumps({"message": "new item added"}), status=200, content_type="application/json")
+    if new_item_id:
+        item = CatalogItemInfoResource.get_item_by_id(new_item_id)
+        item["stock"] = CatalogItemInfoResource.get_item_stock_by_id(new_item_id)["stock"]
+        rsp = jsonify(item)
+        # rsp = Response(json.dumps({"message": "new item added"}), status=200, content_type="application/json")
     else:
         rsp = Response(json.dumps({"message": "item creation failed"}), status=500, content_type="application/json")
     return rsp
@@ -75,7 +87,7 @@ def get_item_by_id(item_id):
     return rsp
 
 
-@app.route("/item/stock/<int:item_id>", methods=["GET"])
+@app.route("/item/<int:item_id>/stock", methods=["GET"])
 def get_item_stock_by_id(item_id):
     result = CatalogItemInfoResource.get_item_stock_by_id(item_id)
     if result:
@@ -95,7 +107,9 @@ def update_item_by_id(item_id):
         success = CatalogItemInfoResource.update_item_by_id(item_id, new_data)
         print("success:", success)
         if success:
-            rsp = Response(json.dumps({"message": "update successful"}), status=200, content_type="application/json")
+            # rsp = Response(json.dumps({"message": "update successful"}), status=200, content_type="application/json")
+            rsp = CatalogItemInfoResource.get_item_by_id(item_id)
+            rsp["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item_id)["stock"]
         else:
             # if there's no change in the update
             rsp = Response(json.dumps({"message": "same update"}), status=400, content_type="application/json")
