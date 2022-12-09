@@ -176,6 +176,7 @@ class RDBService:
     def find_by_template_join(cls, db_schema, table_name1, table_name2, column_names1, column_names2, template,
                               join_column1, join_column2, limit: int, offset: int):
         wc, args = cls._get_where_clause_args(template)
+        print("wc:", wc)
 
         conn = cls._get_db_connection()
         cur = conn.cursor()
@@ -190,10 +191,15 @@ class RDBService:
 
         sql = "select " + ", ".join(column_names1) + " from " + \
               db_schema + "." + table_name1 + " join " + db_schema + "." + table_name2 + " on " + \
-              table_name1 + "." + join_column1 + " = " + table_name2 + "." + join_column2 + " " + wc + \
-              " limit " + " %s " + " offset " + " %s "
-        print("SQL Statement = " + cur.mogrify(sql, args=[limit, offset]))
-        cur.execute(sql, args=[limit, offset])
+              table_name1 + "." + join_column1 + " = " + table_name2 + "." + join_column2
+        if wc:
+            sql += wc
+            args.extend([limit, offset])
+        else:
+            args = [limit, offset]
+        sql += " limit " + "%s" + " offset " + "%s"
+        print("SQL Statement = " + cur.mogrify(sql, args=args))
+        cur.execute(sql, args=args)
         res = cur.fetchall()
 
         sql = "select count(*) from " + db_schema + "." + table_name1

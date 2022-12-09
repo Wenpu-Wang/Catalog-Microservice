@@ -11,9 +11,16 @@
 """
 
 
-def wrap_func(res, limit, offset, total):
+def wrap_func(results, limit, offset, total):
     header = dict()
-    header["count"] = len(res)
+    header["count"] = len(results)
     header["limit"], header["offset"] = limit, offset
     header["total"] = total
-    return {"metadata": {"result_set": header}, "results": res}
+    return {"metadata": {"result_set": header}, "results": results}
+
+
+def wrap_link(href: str, rel: str):
+    link = dict()
+    link["href"] = href
+    link["rel"] = rel
+    return link

@@ -6,14 +6,18 @@ OFFSET = 0
 
 class CatalogItemInfoResource:
     @classmethod
-    def get_items(cls, limit=LIMIT, offset=OFFSET):
+    def get_items(cls, limit=LIMIT, offset=OFFSET, name=None):
+        if not name:
+            template = None
+        else:
+            template = {"name": name}
         result, num_of_rows = RDBService.find_by_template_join(
             db_schema="catalog_db",
             table_name1="item_info",
             table_name2="item_stocking",
             column_names1=["id", "name", "description", "item_price", "image_url"],
             column_names2=["stock"],
-            template=None,
+            template=template,
             join_column1="id",
             join_column2="item_id",
             limit=limit,

@@ -1,7 +1,7 @@
-from flask import Flask, Response, request, jsonify, json
+from flask import Flask, Response, request, jsonify, json, url_for
 
 from application_services.catalog_item_info_resource import CatalogItemInfoResource
-from utils import wrap_func
+from utils import wrap_func, wrap_link
 
 # default settings
 LIMIT = 10
@@ -27,15 +27,19 @@ def index():
 # TODO: implement pagination
 @app.route("/items", methods=["GET"])
 def get_items():
-    limit = request.args.get('limit', type=int)
-    offset = request.args.get('offset', type=int)
+    limit = request.args.get("limit", type=int)
+    offset = request.args.get("offset", type=int)
+    name = request.args.get("name", type=str)
     if not limit:
         limit = LIMIT
     if not offset:
         offset = OFFSET
-    print("limit:", limit, "offset:", offset)
-    result, num_of_rows = CatalogItemInfoResource.get_items(limit, offset)
-    rsp = jsonify(wrap_func(result, limit, offset, num_of_rows))
+    results, num_of_rows = CatalogItemInfoResource.get_items(limit, offset, name)
+    for result in results:
+        result["links"] = list()
+        result["links"].append(wrap_link(url_for("get_item_stock_by_id", item_id=result["id"]), "stock"))
+        result["links"].append(wrap_link(url_for("get_item_by_id", item_id=result["id"]), "self"))
+    rsp = jsonify(wrap_func(results, limit, offset, num_of_rows))
     return rsp
 
 
@@ -78,9 +82,11 @@ def post_item():
 @app.route("/item/<int:item_id>", methods=["GET"])
 def get_item_by_id(item_id):
     result = CatalogItemInfoResource.get_item_by_id(item_id)
-    print(result)
     if result:
         result["stock"] = CatalogItemInfoResource.get_item_stock_by_id(item_id)["stock"]
+        result["links"] = list()
+        result["links"].append(wrap_link(url_for("get_item_stock_by_id", item_id=item_id), "stock"))
+        result["links"].append(wrap_link(url_for("get_item_by_id", item_id=item_id), "self"))
         rsp = jsonify(result)
     else:
         rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
@@ -91,7 +97,10 @@ def get_item_by_id(item_id):
 def get_item_stock_by_id(item_id):
     result = CatalogItemInfoResource.get_item_stock_by_id(item_id)
     if result:
-        rsp = jsonify(result["stock"])
+        result["links"] = list()
+        result["links"].append(wrap_link(url_for("get_item_by_id", item_id=item_id), "info"))
+        result["links"].append(wrap_link(url_for("get_item_stock_by_id", item_id=item_id), "self"))
+        rsp = jsonify(result)
     else:
         rsp = Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
     return rsp
@@ -105,7 +114,6 @@ def update_item_by_id(item_id):
         return Response(json.dumps({"message": "item not found"}), status=404, content_type="application/json")
     else:
         success = CatalogItemInfoResource.update_item_by_id(item_id, new_data)
-        print("success:", success)
         if success:
             # rsp = Response(json.dumps({"message": "update successful"}), status=200, content_type="application/json")
             rsp = CatalogItemInfoResource.get_item_by_id(item_id)
