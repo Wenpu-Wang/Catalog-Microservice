@@ -4,7 +4,7 @@ from application_services.catalog_item_info_resource import CatalogItemInfoResou
 from utils import wrap_func
 
 # default settings
-LIMIT = 25
+LIMIT = 10
 OFFSET = 0
 
 app = Flask(__name__)
@@ -17,7 +17,7 @@ def index():
         "GET items by name": "/items/<string:name>",
         "POST an item": "/item",
         "GET an item by id": "/item/<int:item_id>",
-        "GET an item's stock by id": "/item/stock/<int:item_id>",
+        "GET an item's stock by id": "/item/<int:item_id>/stock",
         "PUT an item by id": "/item/<int:item_id>",
         "DELETE an item by id": "/item/<int:item_id>"
     }
