@@ -56,7 +56,7 @@ def get_items_by_name(name):
     return rsp
 
 
-@app.route("/item", methods=["POST"])
+@app.route("/items", methods=["POST"])
 def post_item():
     data = json.loads(request.data)
     exist = CatalogItemInfoResource.get_item_by_name(data["name"])
@@ -79,7 +79,7 @@ def post_item():
     return rsp
 
 
-@app.route("/item/<int:item_id>", methods=["GET"])
+@app.route("/items/<int:item_id>", methods=["GET"])
 def get_item_by_id(item_id):
     result = CatalogItemInfoResource.get_item_by_id(item_id)
     if result:
@@ -93,7 +93,7 @@ def get_item_by_id(item_id):
     return rsp
 
 
-@app.route("/item/<int:item_id>/stock", methods=["GET"])
+@app.route("/items/<int:item_id>/stock", methods=["GET"])
 def get_item_stock_by_id(item_id):
     result = CatalogItemInfoResource.get_item_stock_by_id(item_id)
     if result:
@@ -106,7 +106,7 @@ def get_item_stock_by_id(item_id):
     return rsp
 
 
-@app.route("/item/<int:item_id>", methods=["PUT"])
+@app.route("/items/<int:item_id>", methods=["PUT"])
 def update_item_by_id(item_id):
     new_data = json.loads(request.data)
     exist = CatalogItemInfoResource.get_item_by_id(item_id)
@@ -124,7 +124,7 @@ def update_item_by_id(item_id):
     return rsp
 
 
-@app.route("/item/<int:item_id>", methods=["DELETE"])
+@app.route("/items/<int:item_id>", methods=["DELETE"])
 def delete_item_by_id(item_id):
     exist = CatalogItemInfoResource.get_item_by_id(item_id)
     if not exist:
