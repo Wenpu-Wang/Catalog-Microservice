@@ -9,6 +9,7 @@
       },
       ...
 """
+import math
 
 
 def wrap_pagination(results, pagesize, offset, total):
@@ -16,7 +17,7 @@ def wrap_pagination(results, pagesize, offset, total):
     header["count"] = len(results)
     header["pagesize"], header["page"] = pagesize, offset
     header["total"] = total
-    header["total_page"] = total // pagesize + 1
+    header["total_page"] = math.ceil(total / pagesize)
     return {"metadata": {"result_set": header}, "results": results}
 
 
