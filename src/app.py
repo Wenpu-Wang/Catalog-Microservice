@@ -1,11 +1,11 @@
 from flask import Flask, Response, request, jsonify, json, url_for
 
 from application_services.catalog_item_info_resource import CatalogItemInfoResource
-from utils import wrap_func, wrap_link
+from utils import wrap_pagination, wrap_link
 
 # default settings
 LIMIT = 10
-OFFSET = 0
+
 
 app = Flask(__name__)
 
@@ -27,19 +27,20 @@ def index():
 # TODO: implement pagination
 @app.route("/items", methods=["GET"])
 def get_items():
-    limit = request.args.get("limit", type=int)
-    offset = request.args.get("offset", type=int)
+    pagesize = request.args.get("pagesize", type=int)
+    page = request.args.get("page", type=int)
     name = request.args.get("name", type=str)
-    if not limit:
-        limit = LIMIT
-    if not offset:
-        offset = OFFSET
-    results, num_of_rows = CatalogItemInfoResource.get_items(limit, offset, name)
+    if not pagesize:
+        pagesize = LIMIT
+    if not page:
+        page = 1
+    limit, offset = pagesize, (page-1)*pagesize
+    results, num_of_rows = CatalogItemInfoResource.get_items(limit=limit, offset=offset, name=name)
     for result in results:
         result["links"] = list()
         result["links"].append(wrap_link(url_for("get_item_stock_by_id", item_id=result["id"]), "stock"))
         result["links"].append(wrap_link(url_for("get_item_by_id", item_id=result["id"]), "self"))
-    rsp = jsonify(wrap_func(results, limit, offset, num_of_rows))
+    rsp = jsonify(wrap_pagination(results, pagesize, page, num_of_rows))
     return rsp
 
 

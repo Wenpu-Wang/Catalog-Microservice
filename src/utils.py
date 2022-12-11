@@ -11,11 +11,12 @@
 """
 
 
-def wrap_func(results, limit, offset, total):
+def wrap_pagination(results, pagesize, offset, total):
     header = dict()
     header["count"] = len(results)
-    header["limit"], header["offset"] = limit, offset
+    header["pagesize"], header["page"] = pagesize, offset
     header["total"] = total
+    header["total_page"] = total // pagesize + 1
     return {"metadata": {"result_set": header}, "results": results}
 
 
