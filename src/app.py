@@ -4,7 +4,7 @@ from application_services.catalog_item_info_resource import CatalogItemInfoResou
 from utils import wrap_pagination, wrap_link
 
 # default settings
-LIMIT = 10
+PAGESIZE = 10
 
 
 app = Flask(__name__)
@@ -31,7 +31,7 @@ def get_items():
     page = request.args.get("page", type=int)
     name = request.args.get("name", type=str)
     if not pagesize:
-        pagesize = LIMIT
+        pagesize = PAGESIZE
     if not page:
         page = 1
     limit, offset = pagesize, (page-1)*pagesize
