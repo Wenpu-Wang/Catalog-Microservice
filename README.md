@@ -30,15 +30,7 @@ This indicates that the web application has started.
 
 The file ```catalog_item_info_resource.py``` is a REST resource.
 
-```python
-"GET items": "/items",
-"GET items by name": "/items/<string:name>",
-"POST an item": "/item",
-"GET an item by id": "/item/<int:item_id>",
-"GET an item's stock by id": "/item/<int:item_id>/stock",
-"PUT an item by id": "/item/<int:item_id>",
-"DELETE an item by id": "/item/<int:item_id>"
-```
+Please refer to [Catalog Microservice APIs.md](https://github.com/Wenpu-Wang/Catalog-Microservice/blob/main/Catalog%20Microservice%20APIs.md)
 
 ## Contact
 
