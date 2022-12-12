@@ -14,12 +14,11 @@ app = Flask(__name__)
 def index():
     context = {
         "GET items": "/items",
-        "GET items by name": "/items/<string:name>",
-        "POST an item": "/item",
-        "GET an item by id": "/item/<int:item_id>",
-        "GET an item's stock by id": "/item/<int:item_id>/stock",
-        "PUT an item by id": "/item/<int:item_id>",
-        "DELETE an item by id": "/item/<int:item_id>"
+        "GET an item by id": "/items/<int:item_id>",
+        "GET an item's stock by id": "/items/<int:item_id>/stock",
+        "POST an item": "/items",
+        "DELETE an item by id": "/items/<int:item_id>",
+        "PUT an item by id": "/items/<int:item_id>"
     }
     return jsonify(context)
 
