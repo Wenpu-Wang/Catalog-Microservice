@@ -2,7 +2,7 @@ from flask import Flask, Response, request, jsonify, json, url_for
 from flask_cors import CORS
 from application_services.catalog_item_info_resource import CatalogItemInfoResource
 from utils import wrap_pagination, wrap_link
-from middleware import notification  # , security
+from middleware import notification
 
 # default settings
 PAGESIZE = 10
@@ -10,27 +10,22 @@ PAGESIZE = 10
 app = Flask(__name__)
 CORS(app)
 
-# trigger_SNS = {"path": "/timeSlot", "method": "GET"}
+trigger_SNS = {"path": "/items", "method": "POST"}
 
 
-# @app.after_request
-# def after_request(response):
-#     print("checking after request")
-#     if request.path == trigger_SNS["path"] and request.method == trigger_SNS["method"]:
-#         sns = notification.NotificationMiddlewareHandler.get_sns_client()
-#         print("Got SNS Client!")
-#         tps = notification.NotificationMiddlewareHandler.get_sns_topics()
-#         print("SNS Topics = \n", json.dumps(tps, indent=2))
-#
-#         message = {"test": "event created"}
-#         notification.NotificationMiddlewareHandler.send_sns_message(
-#             #     #"arn:aws:sns:us-east-1:971820320916:6156project",
-#
-#             "arn:aws:sns:us-east-1:697047102781:new-user-topic",
-#
-#             message
-#         )
-#     return response
+@app.after_request
+def after_request(response):
+    print("checking after request")
+    if request.path == trigger_SNS["path"] and request.method == trigger_SNS["method"]:
+        sns = notification.NotificationMiddlewareHandler.get_sns_client()
+        print("Got SNS Client!")
+        message = {"test": "event created"}
+        notification.NotificationMiddlewareHandler.send_sns_message(
+            sns_topic="arn:aws:sns:us-east-1:381693958687:catalog_item_request",
+            message=response.json
+        )
+        # print(dir(response))
+    return response
 
 
 @app.route("/", methods=["GET"])
@@ -49,6 +44,7 @@ def index():
 # TODO: implement pagination
 @app.route("/items", methods=["GET"])
 def get_items():
+    print("request.path", request.path)
     pagesize = request.args.get("pagesize", type=int)
     page = request.args.get("page", type=int)
     name = request.args.get("name", type=str)
