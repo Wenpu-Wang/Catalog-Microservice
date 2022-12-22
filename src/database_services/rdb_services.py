@@ -176,7 +176,6 @@ class RDBService:
     def find_by_template_join(cls, db_schema, table_name1, table_name2, column_names1, column_names2, template,
                               join_column1, join_column2, limit: int, offset: int):
         wc, args = cls._get_where_clause_args(template)
-        print("wc:", wc)
 
         conn = cls._get_db_connection()
         cur = conn.cursor()

@@ -1,10 +1,15 @@
 import requests
 import json
 import boto3
-import middleware.context as context
+from middleware.context import Context as context
+
+
+AWSAccessKeyId="AKIAVRXV3TIPZXUB7GNM"
+AWSSecretKey="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"
 
 """
-# Set the webhook_url to the one provided by Slack when you create the webhook at https://my.slack.com/services/new/incoming-webhook/
+# Set the webhook_url to the one provided by Slack when you create the webhook at
+https://my.slack.com/services/new/incoming-webhook/
 webhook_url = 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
 slack_data = {'text': "Sup! We're hacking shit together @HackSussex :spaghetti:"}
 
@@ -19,9 +24,8 @@ if response.status_code != 200:
     )
 """
 
+
 def format_message(text_message, event_type, resource_info):
-
-
     a_message = {
         "text": "*" + text_message + "*",
         "blocks": [
@@ -29,19 +33,19 @@ def format_message(text_message, event_type, resource_info):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "*State Change Event:*"
+                    "text": "*Catalog Item Info Changed:*"
                 }
             }
         ]
     }
 
-    for k,v in resource_info.items():
+    for k, v in resource_info.items():
         a_message["blocks"].append(
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": k + ":\t\t" + str(v)
+                    "text": k + ":\t" + str(v)
                 }
             }
         )
@@ -50,7 +54,6 @@ def format_message(text_message, event_type, resource_info):
 
 
 class NotificationMiddlewareHandler:
-
     sns_client = None
 
     def __init__(self):
@@ -60,8 +63,12 @@ class NotificationMiddlewareHandler:
     def get_sns_client(cls):
 
         if NotificationMiddlewareHandler.sns_client is None:
-            NotificationMiddlewareHandler.sns_client = sns = boto3.client("sns",
-                   region_name="us-east-1")
+            NotificationMiddlewareHandler.sns_client = sns = boto3.client(
+                service_name="sns",
+                region_name="us-east-1",
+                aws_access_key_id=AWSAccessKeyId,
+                aws_secret_access_key=AWSSecretKey,
+            )
         return NotificationMiddlewareHandler.sns_client
 
     @classmethod
@@ -114,18 +121,17 @@ class NotificationMiddlewareHandler:
             else:
                 notification = None
 
-            s_url = context.get_context("SLACK_URL")
+            slack_url = context.get_context("SLACK_URL")
 
             if notification.get("change", None):
+                print("notification", notification)
                 request_data = json.dumps(notification)
-                request_data = json.dumps(
-                    {'text': request_data }).encode('utf-8')
+                request_data = json.dumps({'text': request_data}).encode('utf-8')
                 response = requests.post(
-                    s_url, data=request_data,
+                    slack_url, data=request_data,
                     headers={'Content-Type': 'application/json'}
                 )
                 print("Respose = ", response.status_code)
-
 
     @staticmethod
     def send_slack_message(message, event_type, resource_info):
@@ -135,10 +141,8 @@ class NotificationMiddlewareHandler:
         msg = format_message(message, event_type, resource_info)
         msg = json.dumps(msg).encode('utf-8')
 
-
         response = requests.post(
             s_url, data=msg,
             headers={'Content-Type': 'application/json'}
         )
         print("Respose = ", response.status_code)
-

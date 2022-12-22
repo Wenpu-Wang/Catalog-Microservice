@@ -2,6 +2,10 @@ import os
 # This is a bad place for this import
 import pymysql
 
+SUBSCRIPTIONS = {"/items"}
+SLACK_URL = "https://hooks.slack.com/services/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"
+SNS_ARN = "arn:aws:sns:us-east-1:381693958687:catalog_item_request"
+
 
 class Context:
     def __init__(self):
@@ -32,5 +36,14 @@ class Context:
                 "password": "dbuserdbuser",
                 "cursorclass": pymysql.cursors.DictCursor
             }
-
         return db_info
+
+    @staticmethod
+    def get_context(method):
+        if method == "SUBSCRIPTIONS":
+            return SUBSCRIPTIONS
+        elif method == "SLACK_URL":
+            return SLACK_URL
+        elif method == "SNS_ARN":
+            return SNS_ARN
+        return None
