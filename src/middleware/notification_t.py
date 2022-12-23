@@ -1,5 +1,5 @@
 import requests
-
+import os
 from notification import NotificationMiddlewareHandler
 from notification import format_message
 from context import Context as context
@@ -94,7 +94,7 @@ def t_slack():
         {
             "uni": "ww2569",
             "last_name": "Wenpu",
-            "first_name": "Wang"
+            "first_name": "WangWang"
         }
     )
 
@@ -110,7 +110,8 @@ def t_format_message():
                              event_type=None,
                              resource_info=resource_info
                              )
-    slack_url = context.get_context("SLACK_URL")
+    slack_url = os.environ.get("SLACK_URL", None)
+    print("slack url", slack_url)
     response = requests.post(
         slack_url, json=message,
         headers={'Content-Type': 'application/json'}
@@ -120,6 +121,6 @@ def t_format_message():
 
 
 if __name__ == "__main__":
-    # t_sns_1()
-    t_slack()
+    t_sns_1()
+    # t_slack()
     # t_format_message()

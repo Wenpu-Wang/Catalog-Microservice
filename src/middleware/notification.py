@@ -1,11 +1,11 @@
+import os
 import requests
 import json
 import boto3
 from middleware.context import Context as context
 
-
-AWSAccessKeyId="AKIAVRXV3TIPZXUB7GNM"
-AWSSecretKey="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"
+AWSAccessKeyId = os.environ.get("AWSAccessKeyId")
+AWSSecretKey = os.environ.get("AWSSecretKey")
 
 """
 # Set the webhook_url to the one provided by Slack when you create the webhook at
@@ -121,7 +121,7 @@ class NotificationMiddlewareHandler:
             else:
                 notification = None
 
-            slack_url = context.get_context("SLACK_URL")
+            slack_url = os.environ.get("SLACK_URL")
 
             if notification.get("change", None):
                 print("notification", notification)
@@ -136,7 +136,7 @@ class NotificationMiddlewareHandler:
     @staticmethod
     def send_slack_message(message, event_type, resource_info):
 
-        s_url = context.get_context("SLACK_URL")
+        s_url = os.environ.get("SLACK_URL")
 
         msg = format_message(message, event_type, resource_info)
         msg = json.dumps(msg).encode('utf-8')

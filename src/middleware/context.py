@@ -3,7 +3,7 @@ import os
 import pymysql
 
 SUBSCRIPTIONS = {"/items"}
-SLACK_URL = "https://hooks.slack.com/services/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"
+SLACK_URL = os.environ.get("SLACK_URL", None)
 SNS_ARN = "arn:aws:sns:us-east-1:381693958687:catalog_item_request"
 
 
