@@ -19,12 +19,10 @@ def after_request(response):
     if request.path == trigger_SNS["path"] and request.method == trigger_SNS["method"]:
         sns = notification.NotificationMiddlewareHandler.get_sns_client()
         print("Got SNS Client!")
-        message = {"test": "event created"}
         notification.NotificationMiddlewareHandler.send_sns_message(
             sns_topic="arn:aws:sns:us-east-1:381693958687:catalog_item_request",
             message=response.json
         )
-        # print(dir(response))
     return response
 
 
